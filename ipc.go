@@ -1,0 +1,139 @@
+package core
+
+import (
+	"bufio"
+	"context"
+	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/pink-tools/pink-otel"
+)
+
+// startIPCListener starts TCP listener for graceful shutdown
+// Returns cleanup function and error
+func startIPCListener(name string, cancel context.CancelFunc) (func(), error) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return nil, fmt.Errorf("listen: %w", err)
+	}
+
+	// Get assigned port
+	addr := listener.Addr().(*net.TCPAddr)
+	port := addr.Port
+
+	// Write port to file
+	portFile := portFilePath(name)
+	if err := os.MkdirAll(filepath.Dir(portFile), 0755); err != nil {
+		listener.Close()
+		return nil, fmt.Errorf("mkdir: %w", err)
+	}
+	if err := os.WriteFile(portFile, []byte(strconv.Itoa(port)), 0644); err != nil {
+		listener.Close()
+		return nil, fmt.Errorf("write port file: %w", err)
+	}
+
+	// Accept connections
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return // listener closed
+			}
+			go handleIPCConnection(conn, cancel)
+		}
+	}()
+
+	cleanup := func() {
+		listener.Close()
+		os.Remove(portFile)
+	}
+
+	return cleanup, nil
+}
+
+func handleIPCConnection(conn net.Conn, cancel context.CancelFunc) {
+	defer conn.Close()
+
+	reader := bufio.NewReader(conn)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return
+	}
+
+	cmd := strings.TrimSpace(line)
+	switch cmd {
+	case "STOP":
+		otel.Info(context.Background(), "received IPC STOP command")
+		conn.Write([]byte("OK\n"))
+		cancel()
+	case "PING":
+		conn.Write([]byte("PONG\n"))
+	default:
+		conn.Write([]byte("UNKNOWN\n"))
+	}
+}
+
+// SendStop sends STOP command via IPC
+func SendStop(name string) error {
+	port, err := readPort(name)
+	if err != nil {
+		return fmt.Errorf("not running: %w", err)
+	}
+
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 5*time.Second)
+	if err != nil {
+		return fmt.Errorf("connect: %w", err)
+	}
+	defer conn.Close()
+
+	conn.Write([]byte("STOP\n"))
+
+	reader := bufio.NewReader(conn)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("read response: %w", err)
+	}
+
+	if strings.TrimSpace(response) != "OK" {
+		return fmt.Errorf("unexpected response: %s", response)
+	}
+
+	return nil
+}
+
+// IsRunning checks if service is running via IPC
+func IsRunning(name string) bool {
+	port, err := readPort(name)
+	if err != nil {
+		return false
+	}
+
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), time.Second)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+
+	conn.Write([]byte("PING\n"))
+
+	reader := bufio.NewReader(conn)
+	response, _ := reader.ReadString('\n')
+	return strings.TrimSpace(response) == "PONG"
+}
+
+func readPort(name string) (int, error) {
+	data, err := os.ReadFile(portFilePath(name))
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(strings.TrimSpace(string(data)))
+}
+
+func portFilePath(name string) string {
+	return filepath.Join(DataDir(name), name+".port")
+}
