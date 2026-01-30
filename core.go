@@ -63,7 +63,7 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	// Start IPC listener for graceful shutdown
 	ipcCleanup, err := startIPCListener(cfg.Name, cancel)
 	if err != nil {
-		otel.Error(ctx, "failed to start IPC listener", map[string]any{"error": err.Error()})
+		otel.Error(ctx, "failed to start IPC listener", otel.Attr{"error", err.Error()})
 		os.Exit(1)
 	}
 	defer ipcCleanup()
@@ -78,9 +78,9 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	}()
 
 	// Run main
-	otel.Info(ctx, "started", map[string]any{"version": cfg.Version})
+	otel.Info(ctx, "started "+cfg.Version)
 	if err := main(ctx); err != nil {
-		otel.Error(ctx, "main exited with error", map[string]any{"error": err.Error()})
+		otel.Error(ctx, "main exited with error", otel.Attr{"error", err.Error()})
 		os.Exit(1)
 	}
 	otel.Info(ctx, "shutdown complete")
