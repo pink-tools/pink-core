@@ -14,9 +14,9 @@ import (
 	"github.com/pink-tools/pink-otel"
 )
 
-// startIPCListener starts TCP listener for graceful shutdown
+// startIPCListener starts TCP listener for graceful shutdown and custom commands
 // Returns cleanup function and error
-func startIPCListener(name string, cancel context.CancelFunc) (func(), error) {
+func startIPCListener(name string, cancel context.CancelFunc, handler func(string) string) (func(), error) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, fmt.Errorf("listen: %w", err)
@@ -44,7 +44,7 @@ func startIPCListener(name string, cancel context.CancelFunc) (func(), error) {
 			if err != nil {
 				return // listener closed
 			}
-			go handleIPCConnection(conn, cancel)
+			go handleIPCConnection(conn, cancel, handler)
 		}
 	}()
 
@@ -56,7 +56,7 @@ func startIPCListener(name string, cancel context.CancelFunc) (func(), error) {
 	return cleanup, nil
 }
 
-func handleIPCConnection(conn net.Conn, cancel context.CancelFunc) {
+func handleIPCConnection(conn net.Conn, cancel context.CancelFunc, handler func(string) string) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -74,7 +74,12 @@ func handleIPCConnection(conn net.Conn, cancel context.CancelFunc) {
 	case "PING":
 		conn.Write([]byte("PONG\n"))
 	default:
-		conn.Write([]byte("UNKNOWN\n"))
+		if handler != nil {
+			response := handler(cmd)
+			conn.Write([]byte(response + "\n"))
+		} else {
+			conn.Write([]byte("UNKNOWN\n"))
+		}
 	}
 }
 
@@ -104,6 +109,30 @@ func SendStop(name string) error {
 	}
 
 	return nil
+}
+
+// SendCommand sends a command via IPC and returns response
+func SendCommand(name, cmd string) (string, error) {
+	port, err := readPort(name)
+	if err != nil {
+		return "", fmt.Errorf("not running: %w", err)
+	}
+
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 5*time.Second)
+	if err != nil {
+		return "", fmt.Errorf("connect: %w", err)
+	}
+	defer conn.Close()
+
+	conn.Write([]byte(cmd + "\n"))
+
+	reader := bufio.NewReader(conn)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return "", fmt.Errorf("read response: %w", err)
+	}
+
+	return strings.TrimSpace(response), nil
 }
 
 // IsRunning checks if service is running via IPC

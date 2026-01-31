@@ -9,14 +9,31 @@ import (
 
 // LoadEnv loads .env file from service data directory
 func LoadEnv(name string) {
-	envPath := filepath.Join(DataDir(name), ".env")
+	envPath := filepath.Join(ServiceDir(name), ".env")
 	godotenv.Load(envPath)
 }
 
-// DataDir returns the data directory for a service: ~/pink-tools/{name}/
-func DataDir(name string) string {
+// BaseDir returns parent of user's home directory.
+// macOS: /Users, Windows: C:\Users, Linux: /home
+func BaseDir() string {
 	home, _ := os.UserHomeDir()
-	dir := filepath.Join(home, "pink-tools", name)
+	return filepath.Dir(home)
+}
+
+// PinkToolsDir returns the pink-tools directory: /Users/pink-tools/
+func PinkToolsDir() string {
+	return filepath.Join(BaseDir(), "pink-tools")
+}
+
+// ServiceDir returns directory for a service: /Users/pink-tools/{name}/
+// Creates the directory if it doesn't exist.
+func ServiceDir(name string) string {
+	dir := filepath.Join(PinkToolsDir(), name)
 	os.MkdirAll(dir, 0755)
 	return dir
+}
+
+// DataDir is an alias for ServiceDir (backwards compatibility)
+func DataDir(name string) string {
+	return ServiceDir(name)
 }

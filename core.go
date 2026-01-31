@@ -12,10 +12,11 @@ import (
 
 // Config for Run()
 type Config struct {
-	Name     string
-	Version  string
-	Usage    string             // optional, auto-generated if empty
-	Commands map[string]Command // subcommands
+	Name       string
+	Version    string
+	Usage      string             // optional, auto-generated if empty
+	Commands   map[string]Command // subcommands
+	IPCHandler func(cmd string) string // custom IPC commands handler
 }
 
 // Command is a CLI subcommand
@@ -61,7 +62,7 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Start IPC listener for graceful shutdown
-	ipcCleanup, err := startIPCListener(cfg.Name, cancel)
+	ipcCleanup, err := startIPCListener(cfg.Name, cancel, cfg.IPCHandler)
 	if err != nil {
 		otel.Error(ctx, "failed to start IPC listener", otel.Attr{"error", err.Error()})
 		os.Exit(1)
