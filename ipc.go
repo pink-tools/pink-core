@@ -135,6 +135,21 @@ func SendCommand(name, cmd string) (string, error) {
 	return strings.TrimSpace(response), nil
 }
 
+// IsOrchestratorRunning checks if pink-orchestrator is running
+func IsOrchestratorRunning() bool {
+	return IsRunning("pink-orchestrator")
+}
+
+// ShowDialog sends a dialog request to orchestrator and returns user choice
+// Returns "confirm", "cancel", or error message
+// Falls back to empty string if orchestrator not running
+func ShowDialog(dialogJSON string) (string, error) {
+	if !IsOrchestratorRunning() {
+		return "", fmt.Errorf("orchestrator not running")
+	}
+	return SendCommand("pink-orchestrator", "dialog:"+dialogJSON)
+}
+
 // IsRunning checks if service is running via IPC
 func IsRunning(name string) bool {
 	port, err := readPort(name)
