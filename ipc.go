@@ -59,7 +59,7 @@ func startIPCListener(name string, cancel context.CancelFunc, handler func(strin
 func handleIPCConnection(conn net.Conn, cancel context.CancelFunc, handler func(string) string) {
 	defer conn.Close()
 
-	reader := bufio.NewReader(conn)
+	reader := bufio.NewReaderSize(conn, 65536)
 	line, err := reader.ReadString('\n')
 	if err != nil {
 		return

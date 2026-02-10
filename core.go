@@ -76,6 +76,9 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 		<-sigCh
 		otel.Info(ctx, "received shutdown signal")
 		cancel()
+		<-sigCh
+		otel.Error(ctx, "forced shutdown")
+		os.Exit(1)
 	}()
 
 	// Run main
