@@ -64,7 +64,7 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	// Start IPC listener for graceful shutdown
 	ipcCleanup, err := startIPCListener(cfg.Name, cancel, cfg.IPCHandler)
 	if err != nil {
-		log.Error(ctx, "failed to start IPC listener", log.Attr{"error", err.Error()})
+		log.Error(ctx, "failed to start IPC listener", log.Attr{K: "error", V: err.Error()})
 		os.Exit(1)
 	}
 	defer ipcCleanup()
@@ -84,7 +84,7 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	// Run main
 	log.Info(ctx, "started "+cfg.Version)
 	if err := main(ctx); err != nil {
-		log.Error(ctx, "main exited with error", log.Attr{"error", err.Error()})
+		log.Error(ctx, "main exited with error", log.Attr{K: "error", V: err.Error()})
 		os.Exit(1)
 	}
 	log.Info(ctx, "shutdown complete")
