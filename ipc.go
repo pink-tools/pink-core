@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pink-tools/pink-otel"
+	"github.com/pink-tools/pink-core/log"
 )
 
 // startIPCListener starts TCP listener for graceful shutdown and custom commands
@@ -68,7 +68,7 @@ func handleIPCConnection(conn net.Conn, cancel context.CancelFunc, handler func(
 	cmd := strings.TrimSpace(line)
 	switch cmd {
 	case "STOP":
-		otel.Info(context.Background(), "received IPC STOP command")
+		log.Info(context.Background(), "received IPC STOP command")
 		conn.Write([]byte("OK\n"))
 		cancel()
 	case "PING":

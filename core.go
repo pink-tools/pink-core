@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/pink-tools/pink-otel"
+	"github.com/pink-tools/pink-core/log"
 )
 
 // Config for Run()
@@ -34,7 +34,7 @@ type Command struct {
 //   - Signal handling (SIGINT, SIGTERM)
 //   - Context cancellation on shutdown
 func Run(cfg Config, main func(ctx context.Context) error) {
-	otel.Init(cfg.Name, cfg.Version)
+	log.Init(cfg.Name, cfg.Version)
 
 	// Handle CLI
 	if len(os.Args) > 1 {
@@ -64,7 +64,7 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	// Start IPC listener for graceful shutdown
 	ipcCleanup, err := startIPCListener(cfg.Name, cancel, cfg.IPCHandler)
 	if err != nil {
-		otel.Error(ctx, "failed to start IPC listener", otel.Attr{"error", err.Error()})
+		log.Error(ctx, "failed to start IPC listener", log.Attr{"error", err.Error()})
 		os.Exit(1)
 	}
 	defer ipcCleanup()
@@ -74,20 +74,20 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigCh
-		otel.Info(ctx, "received shutdown signal")
+		log.Info(ctx, "received shutdown signal")
 		cancel()
 		<-sigCh
-		otel.Error(ctx, "forced shutdown")
+		log.Error(ctx, "forced shutdown")
 		os.Exit(1)
 	}()
 
 	// Run main
-	otel.Info(ctx, "started "+cfg.Version)
+	log.Info(ctx, "started "+cfg.Version)
 	if err := main(ctx); err != nil {
-		otel.Error(ctx, "main exited with error", otel.Attr{"error", err.Error()})
+		log.Error(ctx, "main exited with error", log.Attr{"error", err.Error()})
 		os.Exit(1)
 	}
-	otel.Info(ctx, "shutdown complete")
+	log.Info(ctx, "shutdown complete")
 }
 
 func handleCLI(cfg Config) bool {
