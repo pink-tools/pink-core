@@ -76,7 +76,7 @@ TCP on localhost, random port.
 - `PING\n` → `PONG\n` (health check)
 - `STOP\n` → `OK\n` (graceful shutdown, cancels context)
 
-**Timeout:** 5 seconds for connections and responses.
+**No timeouts.** Uses `net.Dial` (connects or fails immediately on localhost).
 
 ## Built-in CLI Flags
 
