@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pink-tools/pink-core/log"
 )
@@ -90,7 +89,7 @@ func SendStop(name string) error {
 		return fmt.Errorf("not running: %w", err)
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 5*time.Second)
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return fmt.Errorf("connect: %w", err)
 	}
@@ -118,7 +117,7 @@ func SendCommand(name, cmd string) (string, error) {
 		return "", fmt.Errorf("not running: %w", err)
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 5*time.Second)
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return "", fmt.Errorf("connect: %w", err)
 	}
@@ -157,7 +156,7 @@ func IsRunning(name string) bool {
 		return false
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), time.Second)
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return false
 	}
