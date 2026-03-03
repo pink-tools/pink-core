@@ -9,10 +9,17 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// LoadEnv loads .env file from service data directory
+// LoadEnv loads .env file from service data directory.
+// Does not override existing env vars (safe for initial load).
 func LoadEnv(name string) {
 	envPath := filepath.Join(ServiceDir(name), ".env")
 	godotenv.Load(envPath)
+}
+
+// ReloadEnv re-reads .env file, overriding existing env vars.
+func ReloadEnv(name string) {
+	envPath := filepath.Join(ServiceDir(name), ".env")
+	godotenv.Overload(envPath)
 }
 
 // BaseDir returns parent of user's home directory.
