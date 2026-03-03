@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -47,4 +48,27 @@ func BinaryPath(name string) string {
 // DataDir is an alias for ServiceDir (backwards compatibility)
 func DataDir(name string) string {
 	return ServiceDir(name)
+}
+
+// SaveEnv merges values into a service's .env file.
+// Creates the file if it doesn't exist.
+func SaveEnv(name string, values map[string]string) error {
+	envPath := filepath.Join(ServiceDir(name), ".env")
+
+	existing, err := godotenv.Read(envPath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("read %s: %w", envPath, err)
+	}
+	if existing == nil {
+		existing = make(map[string]string)
+	}
+
+	for k, v := range values {
+		existing[k] = v
+	}
+
+	if err := godotenv.Write(existing, envPath); err != nil {
+		return fmt.Errorf("write %s: %w", envPath, err)
+	}
+	return nil
 }

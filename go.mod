@@ -5,6 +5,7 @@ go 1.25.4
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pink-tools/pink-otel v1.8.0
+	golang.org/x/term v0.38.0
 )
 
 require (
@@ -13,6 +14,5 @@ require (
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
