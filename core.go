@@ -43,12 +43,10 @@ func Run(cfg Config, main func(ctx context.Context) error) {
 			return
 		}
 
-		// Unknown non-flag argument = unknown command → error
-		if arg := os.Args[1]; arg != "" && arg[0] != '-' {
-			fmt.Fprintf(os.Stderr, "unknown command: %s\n", arg)
-			printUsage(cfg)
-			os.Exit(1)
-		}
+		// Unknown argument (flag or command) → error
+		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
+		printUsage(cfg)
+		os.Exit(1)
 	}
 
 	// No main function = CLI-only tool
