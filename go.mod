@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/joho/godotenv v1.5.1
-	github.com/pink-tools/pink-otel v1.8.1
+	github.com/pink-tools/pink-otel v1.20.0
 	golang.org/x/term v0.38.0
 )
 
