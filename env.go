@@ -22,11 +22,16 @@ func ReloadEnv(name string) {
 	godotenv.Overload(envPath)
 }
 
+// HomeDir returns the current user's home directory.
+func HomeDir() string {
+	home, _ := os.UserHomeDir()
+	return home
+}
+
 // BaseDir returns parent of user's home directory.
 // macOS: /Users, Windows: C:\Users, Linux: /home
 func BaseDir() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Dir(home)
+	return filepath.Dir(HomeDir())
 }
 
 // PinkToolsDir returns the pink-tools directory: /Users/pink-tools/
