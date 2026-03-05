@@ -28,18 +28,12 @@ func HomeDir() string {
 	return home
 }
 
-// BaseDir returns parent of user's home directory.
-// macOS: /Users, Windows: C:\Users, Linux: /home
-func BaseDir() string {
-	return filepath.Dir(HomeDir())
-}
-
-// PinkToolsDir returns the pink-tools directory: /Users/pink-tools/
+// PinkToolsDir returns ~/pink-tools/
 func PinkToolsDir() string {
-	return filepath.Join(BaseDir(), "pink-tools")
+	return filepath.Join(HomeDir(), "pink-tools")
 }
 
-// ServiceDir returns directory for a service: /Users/pink-tools/{name}/
+// ServiceDir returns ~/pink-tools/{name}/
 // Creates the directory if it doesn't exist.
 func ServiceDir(name string) string {
 	dir := filepath.Join(PinkToolsDir(), name)
@@ -47,7 +41,7 @@ func ServiceDir(name string) string {
 	return dir
 }
 
-// BinaryPath returns full path to a service binary: /Users/pink-tools/{name}/{name}
+// BinaryPath returns full path to a service binary: ~/pink-tools/{name}/{name}
 // Appends .exe on Windows.
 func BinaryPath(name string) string {
 	bin := name
