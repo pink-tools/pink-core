@@ -56,6 +56,17 @@ func DataDir(name string) string {
 	return ServiceDir(name)
 }
 
+// AppDataDir returns platform-standard persistent data directory.
+// macOS: ~/Library/Application Support/pink-tools/{name}/
+// Linux: ~/.config/pink-tools/{name}/
+// Windows: %AppData%/pink-tools/{name}/
+func AppDataDir(name string) string {
+	base, _ := os.UserConfigDir()
+	dir := filepath.Join(base, "pink-tools", name)
+	os.MkdirAll(dir, 0755)
+	return dir
+}
+
 // SaveEnv merges values into a service's .env file.
 // Creates the file if it doesn't exist.
 func SaveEnv(name string, values map[string]string) error {

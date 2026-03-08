@@ -15,6 +15,7 @@ type Config struct {
 	Name       string
 	Version    string
 	Usage      string             // optional, auto-generated if empty
+	Context    string             // embedded agent context (--claude output)
 	Commands   map[string]Command // subcommands
 	IPCHandler func(cmd string) string // custom IPC commands handler
 }
@@ -115,6 +116,12 @@ func handleCLI(cfg Config) bool {
 			os.Exit(1)
 		}
 		return true
+
+	case "--claude":
+		if cfg.Context != "" {
+			fmt.Println(cfg.Context)
+		}
+		return true
 	}
 
 	// Check custom commands
@@ -141,6 +148,7 @@ func printUsage(cfg Config) {
 	fmt.Println("  --version, -V    Show version")
 	fmt.Println("  --help, -h       Show this help")
 	fmt.Println("  --health         Check if running")
+	fmt.Println("  --claude         Print agent context")
 
 	if len(cfg.Commands) > 0 {
 		fmt.Println()
