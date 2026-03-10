@@ -16,6 +16,16 @@ import (
 // startIPCListener starts TCP listener for graceful shutdown and custom commands
 // Returns cleanup function and error
 func startIPCListener(name string, cancel context.CancelFunc, handler func(string) string) (func(), error) {
+	// Check for stale port file from a crashed instance
+	portFile := portFilePath(name)
+	if oldPort, err := readPort(name); err == nil {
+		if pingIPC(oldPort) {
+			return nil, fmt.Errorf("another instance of %s is already running on port %d", name, oldPort)
+		}
+		// Stale port file — previous instance crashed, clean it up
+		os.Remove(portFile)
+	}
+
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, fmt.Errorf("listen: %w", err)
@@ -26,7 +36,6 @@ func startIPCListener(name string, cancel context.CancelFunc, handler func(strin
 	port := addr.Port
 
 	// Write port to file
-	portFile := portFilePath(name)
 	if err := os.MkdirAll(filepath.Dir(portFile), 0755); err != nil {
 		listener.Close()
 		return nil, fmt.Errorf("mkdir: %w", err)
@@ -155,7 +164,11 @@ func IsRunning(name string) bool {
 	if err != nil {
 		return false
 	}
+	return pingIPC(port)
+}
 
+// pingIPC sends PING to a port and returns true if it responds with PONG
+func pingIPC(port int) bool {
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return false

@@ -9,6 +9,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func fatal(msg string, err error) {
+	fmt.Fprintf(os.Stderr, "fatal: %s: %v\n", msg, err)
+	os.Exit(1)
+}
+
 // LoadEnv loads .env file from service data directory.
 // Does not override existing env vars (safe for initial load).
 func LoadEnv(name string) {
@@ -37,7 +42,9 @@ func PinkToolsDir() string {
 // Creates the directory if it doesn't exist.
 func ServiceDir(name string) string {
 	dir := filepath.Join(PinkToolsDir(), name)
-	os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		fatal("create service dir "+dir, err)
+	}
 	return dir
 }
 
@@ -63,7 +70,9 @@ func DataDir(name string) string {
 func AppDataDir(name string) string {
 	base, _ := os.UserConfigDir()
 	dir := filepath.Join(base, "pink-tools", name)
-	os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		fatal("create app data dir "+dir, err)
+	}
 	return dir
 }
 
